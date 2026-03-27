@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Results — {{ scan.domain }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0a0c10;
+    --surface: #111318;
+    --border:  #1e2330;
+    --accent:  #00e5ff;
+    --danger:  #ef4444;
+    --warn:    #f59e0b;
+    --success: #22c55e;
+    --text:    #e2e8f0;
+    --muted:   #64748b;
+    --mono:    'Space Mono', monospace;
+    --sans:    'DM Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .back-link {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+  h1 {
+    font-family: var(--mono);
+    font-size: 1.3rem;
+    color: var(--accent);
+  }
+  h1 span { color: var(--muted); font-weight: 400; }
+
+  /* Meta row */
+  .meta {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+  }
+  .meta-item { display: flex; flex-direction: column; gap: 0.2rem; }
+  .meta-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .meta-value { font-size: 0.9rem; color: var(--text); }
+
+  /* Severity summary pills */
+  .sev-row {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .sev-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .sev-pill .count { font-size: 1rem; }
+  .sev-critical { background: #1c0a0a; color: #f87171; border: 1px solid #7f1d1d; }
+  .sev-high     { background: #1c1208; color: #fb923c; border: 1px solid #7c2d12; }
+  .sev-medium   { background: #1c1a08; color: #fbbf24; border: 1px solid #78350f; }
+  .sev-low      { background: #052e16; color: #4ade80; border: 1px solid #14532d; }
+  .sev-info     { background: #1e3a5f; color: #60a5fa; border: 1px solid #1e3a8a; }
+
+  /* Findings list */
+  .section-title {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.75rem;
+  }
+
+  .finding {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.6rem;
+    border-left: 3px solid var(--border);
+    transition: border-left-color 0.15s;
+  }
+  .finding.critical { border-left-color: #ef4444; }
+  .finding.high     { border-left-color: #f97316; }
+  .finding.medium   { border-left-color: #f59e0b; }
+  .finding.low      { border-left-color: #22c55e; }
+  .finding.info     { border-left-color: #3b82f6; }
+
+  .finding-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+  }
+  .finding-type {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .badge {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+  .badge-critical { background: #1c0a0a; color: #f87171; }
+  .badge-high     { background: #1c1208; color: #fb923c; }
+  .badge-medium   { background: #1c1a08; color: #fbbf24; }
+  .badge-low      { background: #052e16; color: #4ade80; }
+  .badge-info     { background: #1e3a5f; color: #60a5fa; }
+
+  .finding-detail {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    word-break: break-all;
+    line-height: 1.5;
+  }
+
+  .empty {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2.5rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  .dl-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    text-decoration: none;
+    border: 1px solid var(--accent);
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    transition: background 0.15s;
+    margin-bottom: 2rem;
+  }
+  .dl-link:hover { background: rgba(0,229,255,0.08); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <a class="back-link" href="/">← Back to dashboard</a>
+    <h1>{{ scan.domain }} <span>#{{ scan.id }}</span></h1>
+  </header>
+
+  <div class="meta">
+    <div class="meta-item">
+      <span class="meta-label">Status</span>
+      <span class="meta-value">{{ scan.status }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Started</span>
+      <span class="meta-value">{{ scan.started_at[:16] if scan.started_at else '—' }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Finished</span>
+      <span class="meta-value">{{ scan.finished_at[:16] if scan.finished_at else '—' }}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Total findings</span>
+      <span class="meta-value">{{ findings | length }}</span>
+    </div>
+  </div>
+
+  {% if findings %}
+    {% set counts = {} %}
+    {% for f in findings %}
+      {% set sev = f.severity | lower %}
+      {% if sev in counts %}{% set _ = counts.update({sev: counts[sev]+1}) %}
+      {% else %}{% set _ = counts.update({sev: 1}) %}{% endif %}
+    {% endfor %}
+    <div class="sev-row">
+      {% for sev in ['critical','high','medium','low','info'] %}
+        {% if counts.get(sev, 0) > 0 %}
+        <div class="sev-pill sev-{{ sev }}">
+          <span class="count">{{ counts[sev] }}</span> {{ sev }}
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:2rem;">
+    <a class="dl-link" href="/download/{{ scan.domain }}/report.pdf">↓ PDF report</a>
+    <a class="dl-link" href="/download/{{ scan.domain }}/findings.json">↓ JSON</a>
+    <a class="dl-link" href="/download/{{ scan.domain }}/findings.csv">↓ CSV</a>
+  </div>
+
+  <div class="section-title">// Findings</div>
+
+  {% if findings %}
+    {% for f in findings %}
+    <div class="finding {{ f.severity | lower }}">
+      <div class="finding-header">
+        <span class="finding-type">{{ f.type }}</span>
+        <span class="badge badge-{{ f.severity | lower }}">{{ f.severity }}</span>
+      </div>
+      <div class="finding-detail">{{ f.detail }}</div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">No findings recorded for this scan.</div>
+  {% endif %}
+
+</div>
+</body>
+</html>
